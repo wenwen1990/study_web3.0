@@ -16,6 +16,7 @@ func main() {
 	fmt.Println(isPalindrome(121))
 	fmt.Println(isPalindrome(-121))
 	fmt.Println(isPalindrome(10))
+
 }
 
 /*
