@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -16,6 +17,13 @@ func main() {
 	fmt.Println(isPalindrome(121))
 	fmt.Println(isPalindrome(-121))
 	fmt.Println(isPalindrome(10))
+
+	fmt.Println(isValid("()"))
+	fmt.Println(isValid("()[]{}"))
+	fmt.Println(isValid("(]"))
+	fmt.Println(isValid("([])"))
+	fmt.Println(isValid("([)]"))
+	fmt.Println(isValid("]"))
 
 }
 
@@ -68,4 +76,50 @@ func isPalindrome(x int) bool {
 		}
 	}
 	return res
+}
+
+/*
+20. 有效的括号
+给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串 s ，判断字符串是否有效。
+有效字符串需满足：
+左括号必须用相同类型的右括号闭合。
+左括号必须以正确的顺序闭合。
+每个右括号都有一个对应的相同类型的左括号。
+*/
+func isValid(s string) bool {
+	arr := strings.Split(s, "")
+	stack := []string{}
+	for _, value := range arr {
+		if value == "(" || value == "[" || value == "{" {
+			stack = append(stack, value)
+		} else if value == ")" {
+			if len(stack) == 0 {
+				return false
+			}
+			lastValue := stack[len(stack)-1]
+			stack = stack[0 : len(stack)-1]
+			if lastValue != "(" {
+				return false
+			}
+		} else if value == "]" {
+			if len(stack) == 0 {
+				return false
+			}
+			lastValue := stack[len(stack)-1]
+			stack = stack[0 : len(stack)-1]
+			if lastValue != "[" {
+				return false
+			}
+		} else if value == "}" {
+			if len(stack) == 0 {
+				return false
+			}
+			lastValue := stack[len(stack)-1]
+			stack = stack[0 : len(stack)-1]
+			if lastValue != "{" {
+				return false
+			}
+		}
+	}
+	return len(stack) == 0
 }
