@@ -7,24 +7,28 @@ import (
 )
 
 func main() {
-	nums1 := []int{2, 2, 1}
-	nums2 := []int{4, 1, 2, 1, 2}
-	nums3 := []int{1}
-	fmt.Printf("%+v\n", singleNumber(nums1))
-	fmt.Printf("%+v\n", singleNumber(nums2))
-	fmt.Printf("%+v\n", singleNumber(nums3))
+	//nums1 := []int{2, 2, 1}
+	//nums2 := []int{4, 1, 2, 1, 2}
+	//nums3 := []int{1}
+	//fmt.Printf("%+v\n", singleNumber(nums1))
+	//fmt.Printf("%+v\n", singleNumber(nums2))
+	//fmt.Printf("%+v\n", singleNumber(nums3))
+	//
+	//fmt.Println(isPalindrome(121))
+	//fmt.Println(isPalindrome(-121))
+	//fmt.Println(isPalindrome(10))
+	//
+	//fmt.Println(isValid("()"))
+	//fmt.Println(isValid("()[]{}"))
+	//fmt.Println(isValid("(]"))
+	//fmt.Println(isValid("([])"))
+	//fmt.Println(isValid("([)]"))
+	//fmt.Println(isValid("]"))
 
-	fmt.Println(isPalindrome(121))
-	fmt.Println(isPalindrome(-121))
-	fmt.Println(isPalindrome(10))
-
-	fmt.Println(isValid("()"))
-	fmt.Println(isValid("()[]{}"))
-	fmt.Println(isValid("(]"))
-	fmt.Println(isValid("([])"))
-	fmt.Println(isValid("([)]"))
-	fmt.Println(isValid("]"))
-
+	fmt.Println(longestCommonPrefix([]string{"flower", "flow", "flight"}))
+	fmt.Println(longestCommonPrefix([]string{"dog", "racecar", "car"}))
+	fmt.Println(longestCommonPrefix([]string{""}))
+	fmt.Println(longestCommonPrefix([]string{"flower", "flower", "flower", "flower"}))
 }
 
 /*
@@ -122,4 +126,33 @@ func isValid(s string) bool {
 		}
 	}
 	return len(stack) == 0
+}
+
+/*
+*
+14. 最长公共前缀
+编写一个函数来查找字符串数组中的最长公共前缀。
+如果不存在公共前缀，返回空字符串 ""。
+*/
+func longestCommonPrefix(strs []string) string {
+	res := ""
+	length := len(strs)
+	if length == 0 || strs[0] == "" {
+		return res
+	}
+	firstStr := strs[0]
+	for i := 0; i < len(firstStr); i++ {
+		targetValue := firstStr[i]
+		for j := 1; j < length; j++ {
+			otherStr := strs[j]
+			if len(otherStr)-1 < i {
+				return res
+			} else if otherStr[i] != targetValue {
+				return res
+			}
+		}
+		res += string(targetValue)
+	}
+
+	return res
 }
