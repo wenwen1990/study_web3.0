@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -13,11 +14,11 @@ func main() {
 	//fmt.Printf("%+v\n", singleNumber(nums1))
 	//fmt.Printf("%+v\n", singleNumber(nums2))
 	//fmt.Printf("%+v\n", singleNumber(nums3))
-	//
+
 	//fmt.Println(isPalindrome(121))
 	//fmt.Println(isPalindrome(-121))
 	//fmt.Println(isPalindrome(10))
-	//
+
 	//fmt.Println(isValid("()"))
 	//fmt.Println(isValid("()[]{}"))
 	//fmt.Println(isValid("(]"))
@@ -34,8 +35,15 @@ func main() {
 	//fmt.Println(plusOne([]int{1, 2, 3, 9, 9, 9}))
 	//fmt.Println(plusOne([]int{9, 9, 9}))
 
-	fmt.Println(removeDuplicates([]int{1, 1, 2}))
-	fmt.Println(removeDuplicates([]int{0, 0, 1, 1, 1, 2, 2, 3, 3, 4}))
+	// fmt.Println(removeDuplicates([]int{1, 1, 2}))
+	// fmt.Println(removeDuplicates([]int{0, 0, 1, 1, 1, 2, 2, 3, 3, 4}))
+
+	// fmt.Println(merge([][]int{[]int{1, 3}, []int{2, 6}, []int{8, 10}, []int{15, 18}}))
+	// fmt.Println(merge([][]int{[]int{1, 4}, []int{4, 5}}))
+
+	fmt.Println(twoSum([]int{2, 7, 11, 15}, 9))
+	fmt.Println(twoSum([]int{3, 2, 4}, 6))
+	fmt.Println(twoSum([]int{3, 3}, 6))
 }
 
 /*
@@ -136,7 +144,6 @@ func isValid(s string) bool {
 }
 
 /*
-*
 14. 最长公共前缀
 编写一个函数来查找字符串数组中的最长公共前缀。
 如果不存在公共前缀，返回空字符串 ""。
@@ -196,7 +203,6 @@ func plusOne(digits []int) []int {
 }
 
 /*
-*
 26. 删除有序数组中的重复项
 给你一个 非严格递增排列 的数组 nums ，请你 原地 删除重复出现的元素，使每个元素 只出现一次 ，返回删除后数组的新长度。
 元素的 相对顺序 应该保持 一致 。然后返回 nums 中唯一元素的个数。
@@ -220,4 +226,53 @@ func removeDuplicates(nums []int) int {
 		}
 	}
 	return slow + 1
+}
+
+/*
+56. 合并区间
+以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。
+请你合并所有重叠的区间，并返回 一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间 。
+*/
+func merge(intervals [][]int) [][]int {
+	var res [][]int
+	sort.Slice(intervals, func(i, j int) bool { return intervals[i][0] < intervals[j][0] })
+	for idx := 0; idx < len(intervals); idx++ {
+		targetArr := intervals[idx]
+		if len(res) == 0 || res[len(res)-1][1] < targetArr[0] {
+			res = append(res, targetArr)
+			continue
+		}
+		res[len(res)-1][1] = max(res[len(res)-1][1], targetArr[1])
+	}
+	return res
+}
+
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+/*
+1. 两数之和
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。
+你可以假设每种输入只会对应一个答案，并且你不能使用两次相同的元素。
+你可以按任意顺序返回答案。
+*/
+func twoSum(nums []int, target int) []int {
+	var res = []int{}
+	var value2idxMap = make(map[int]int)
+	for idx, value := range nums {
+		targetValue := nums[idx]
+		otherValue := target - targetValue
+		otherIdx, exist := value2idxMap[otherValue]
+		if exist {
+			res = append(res, idx)
+			res = append(res, otherIdx)
+			return res
+		}
+		value2idxMap[value] = idx
+	}
+	return res
 }
