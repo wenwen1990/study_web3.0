@@ -35,6 +35,8 @@ func main() {
 	// question3(sqlxDB)
 	// question4(sqlxDB)
 	question5(db)
+	// question6(db)
+	question7(db)
 
 }
 
@@ -311,25 +313,53 @@ func question5(db *gorm.DB) {
 		}
 		db.Create(&users)
 		var posts = []Post{
-			{UuserId: users[0].Id, Title: "文章A-1"},
-			{UuserId: users[0].Id, Title: "文章A-2"},
-			{UuserId: users[0].Id, Title: "文章A-3"},
-			{UuserId: users[1].Id, Title: "文章B-1"},
-			{UuserId: users[2].Id, Title: "文章C-1"},
-			{UuserId: users[2].Id, Title: "文章C-2"},
+			{UserID: users[0].ID, Title: "文章A-1"},
+			{UserID: users[0].ID, Title: "文章A-2"},
+			{UserID: users[0].ID, Title: "文章A-3"},
+			{UserID: users[1].ID, Title: "文章B-1"},
+			{UserID: users[2].ID, Title: "文章C-1"},
+			{UserID: users[2].ID, Title: "文章C-2"},
 		}
 		db.Create(&posts)
 		var comments = []Comment{
-			{PostId: posts[0].Id, Content: "评价A-1"},
-			{PostId: posts[0].Id, Content: "评价A-2"},
-			{PostId: posts[0].Id, Content: "评价A-3"},
-			{PostId: posts[1].Id, Content: "评价B-1"},
-			{PostId: posts[1].Id, Content: "评价B-2"},
-			{PostId: posts[3].Id, Content: "评价C-1"},
+			{PostID: posts[0].ID, Content: "评价A-1"},
+			{PostID: posts[0].ID, Content: "评价A-2"},
+			{PostID: posts[0].ID, Content: "评价A-3"},
+			{PostID: posts[1].ID, Content: "评价B-1"},
+			{PostID: posts[1].ID, Content: "评价B-2"},
+			{PostID: posts[3].ID, Content: "评价C-1"},
 		}
 		db.Create(&comments)
+		for _, p := range posts {
+			var count int64
+			db.Model(&Comment{}).Where("post_id = ?", p.ID).Count(&count)
+			// fmt.Printf("count: %v\n", count)
+			db.Model(p).Update("comment_num", count)
+		}
 	}
 	fmt.Println("初始化3张表及数据完毕")
+}
+
+type User struct {
+	ID      uint
+	Name    string
+	PostNum uint   `gorm:"default:0"`
+	Posts   []Post `gorm:"foreignKey:UserID"`
+}
+
+type Post struct {
+	ID           uint
+	UserID       uint
+	Title        string
+	CommentNum   uint
+	CommentState string
+	Comments     []Comment `gorm:"foreignKey:PostID"`
+}
+
+type Comment struct {
+	ID      uint
+	PostID  uint
+	Content string
 }
 
 /*
@@ -337,27 +367,86 @@ func question5(db *gorm.DB) {
 基于上述博客系统的模型定义。
 要求 ：
 编写Go代码，使用Gorm查询某个用户发布的所有文章及其对应的评论信息。
-编写Go代码，使用Gorm查询评论数量最多的文章信息。
+编写Go代码，使用Gorm查询评论数量最多的文章信息
 */
 func question6(db *gorm.DB) {
-
+	var user User
+	// 查询某个用户 "张三"发布的所有文章及其对应的评论信息。
+	var userName = "张三"
+	if err := db.Preload("Posts.Comments").Where("name =?", userName).First(&user).Error; err != nil {
+		panic(err)
+	}
+	fmt.Printf("用户：%s\n", user.Name)
+	for _, post := range user.Posts {
+		fmt.Printf("文章：%s\n", post.Title)
+		for _, comment := range post.Comments {
+			fmt.Printf(" - 评论：%s\n", comment.Content)
+		}
+	}
+	// 使用Gorm查询评论数量最多的文章信息。
+	var post Post
+	if err := db.Model(&post).
+		Select("posts.*,COUNT(c.id) as commentNum").
+		Joins("left join comments c ON c.post_id=posts.id").
+		Group("posts.id").
+		Order("commentNum desc").
+		Limit(1).
+		Preload("Comments").
+		Find(&post).Error; err != nil {
+		panic(err)
+	}
+	fmt.Println(post)
 }
 
-type User struct {
-	Id   uint
-	Name string
+/*
+题目7：钩子函数
+继续使用博客系统的模型。
+要求 ：
+为 Post 模型添加一个钩子函数，在文章创建时自动更新用户的文章数量统计字段。
+为 Comment 模型添加一个钩子函数，在评论删除时检查文章的评论数量，如果评论数量为 0，则更新文章的评论状态为 "无评论"。
+*/
+func question7(db *gorm.DB) {
+	var userId uint = 1
+	post := Post{Title: "新增一篇文章", UserID: userId}
+	db.Create(&post)
+	fmt.Println(post)
+
+	var commnet = Comment{ID: 6}
+	db.First(&commnet)
+	fmt.Println("commnet", commnet)
+	db.Delete(&commnet)
+	var post2 Post
+	db.Model(&post2).
+		Preload("Comments").
+		First(&post2, 4)
+	fmt.Println(post2)
+
+	db.Model(&post2).
+		Preload("Comments").
+		First(&post2)
+	fmt.Println(post2)
 }
 
-type Post struct {
-	Id           uint
-	UuserId      uint
-	Title        string
-	CommentNum   uint   `gorm:default:0`
-	CommentState string `gorm:default:""`
+func (p *Post) AfterCreate(tx *gorm.DB) (err error) {
+	return tx.
+		Model(&User{}).
+		Where("id = ?", p.UserID).
+		Update("post_num", gorm.Expr("IFNULL(post_num,0)+?", 1)).
+		Error
 }
 
-type Comment struct {
-	Id      uint
-	PostId  uint
-	Content string
+func (c *Comment) AfterDelete(tx *gorm.DB) (err error) {
+	var count int64
+	tx.Model(&Comment{}).
+		Where("post_id =?", c.PostID).
+		Count(&count)
+	if count == 0 {
+		return tx.Model(&Post{}).
+			Where("id =?", c.PostID).
+			Updates(Post{CommentNum: uint(count), CommentState: "无评论"}).Error
+	} else {
+		return tx.Model(&Post{}).
+			Where("id =?", c.PostID).
+			Update("comment_num", count).Error
+	}
 }
